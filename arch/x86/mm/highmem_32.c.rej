@@ -1,0 +1,13 @@
+--- arch/x86/mm/highmem_32.c	2011-11-11 13:12:24.000000000 -0500
++++ arch/x86/mm/highmem_32.c	2011-11-15 20:02:59.000000000 -0500
+@@ -44,7 +44,10 @@
+ 	idx = type + KM_TYPE_NR*smp_processor_id();
+ 	vaddr = __fix_to_virt(FIX_KMAP_BEGIN + idx);
+ 	BUG_ON(!pte_none(*(kmap_pte-idx)));
++
++	pax_open_kernel();
+ 	set_pte(kmap_pte-idx, mk_pte(page, prot));
++	pax_close_kernel();
+ 
+ 	return (void *)vaddr;
+ }

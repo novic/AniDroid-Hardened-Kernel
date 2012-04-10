@@ -1,0 +1,21 @@
+--- arch/x86/kernel/traps.c	2011-11-11 13:12:24.000000000 -0500
++++ arch/x86/kernel/traps.c	2011-11-15 20:02:59.000000000 -0500
+@@ -763,7 +803,7 @@
+ void __math_state_restore(void)
+ {
+ 	struct thread_info *thread = current_thread_info();
+-	struct task_struct *tsk = thread->task;
++	struct task_struct *tsk = current;
+ 
+ 	/*
+ 	 * Paranoid restore. send a SIGSEGV if we fail to restore the state.
+@@ -790,8 +830,7 @@
+  */
+ asmlinkage void math_state_restore(void)
+ {
+-	struct thread_info *thread = current_thread_info();
+-	struct task_struct *tsk = thread->task;
++	struct task_struct *tsk = current;
+ 
+ 	if (!tsk_used_math(tsk)) {
+ 		local_irq_enable();

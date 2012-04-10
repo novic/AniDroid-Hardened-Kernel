@@ -1,0 +1,10 @@
+--- arch/arm/include/asm/kmap_types.h	2011-11-11 13:12:24.000000000 -0500
++++ arch/arm/include/asm/kmap_types.h	2011-11-15 20:02:59.000000000 -0500
+@@ -21,6 +21,7 @@
+ 	KM_L1_CACHE,
+ 	KM_L2_CACHE,
+ 	KM_KDB,
++	KM_CLEARPAGE,
+ 	KM_TYPE_NR
+ };
+ 

@@ -1,0 +1,59 @@
+--- fs/proc/base.c	2011-11-11 13:12:24.000000000 -0500
++++ fs/proc/base.c	2011-11-15 20:02:59.000000000 -0500
+@@ -301,6 +320,9 @@
+ 	if (!mm->arg_end)
+ 		goto out_mm;	/* Shh! No looking before we're done */
+ 
++	if (gr_acl_handle_procpidmem(task))
++		goto out_mm;
++
+  	len = mm->arg_end - mm->arg_start;
+  
+ 	if (len > PAGE_SIZE)
+@@ -328,12 +350,28 @@
+ 	return res;
+ }
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
++#define PAX_RAND_FLAGS(_mm) (_mm != NULL && _mm != current->mm && \
++			     (_mm->pax_flags & MF_PAX_RANDMMAP || \
++			      _mm->pax_flags & MF_PAX_SEGMEXEC))
++#endif
++
+ static int proc_pid_auxv(struct task_struct *task, char *buffer)
+ {
+ 	struct mm_struct *mm = mm_for_maps(task);
+ 	int res = PTR_ERR(mm);
+ 	if (mm && !IS_ERR(mm)) {
+ 		unsigned int nwords = 0;
++
++#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
++		/* allow if we're currently ptracing this task */
++		if (PAX_RAND_FLAGS(mm) &&
++		    (!(task->ptrace & PT_PTRACED) || (task->parent != current))) {
++			mmput(mm);
++			return 0;
++		}
++#endif
++
+ 		do {
+ 			nwords += 2;
+ 		} while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
+@@ -347,7 +385,7 @@
+ }
+ 
+ 
+-#ifdef CONFIG_KALLSYMS
++#if defined(CONFIG_KALLSYMS) && !defined(CONFIG_GRKERNSEC_HIDESYM)
+ /*
+  * Provides a wchan file via kallsyms in a proper one-value-per-file format.
+  * Returns the resolved symbol.  If that fails, simply return the address.
+@@ -386,7 +424,7 @@
+ 	mutex_unlock(&task->signal->cred_guard_mutex);
+ }
+ 
+-#ifdef CONFIG_STACKTRACE
++#if defined(CONFIG_STACKTRACE) && !defined(CONFIG_GRKERNSEC_HIDESYM)
+ 
+ #define MAX_STACK_TRACE_DEPTH	64
+ 

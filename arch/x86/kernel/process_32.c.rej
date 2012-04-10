@@ -1,0 +1,21 @@
+--- arch/x86/kernel/process_32.c	2011-11-11 13:12:24.000000000 -0500
++++ arch/x86/kernel/process_32.c	2011-11-15 20:02:59.000000000 -0500
+@@ -293,7 +294,7 @@
+ 	struct thread_struct *prev = &prev_p->thread,
+ 				 *next = &next_p->thread;
+ 	int cpu = smp_processor_id();
+-	struct tss_struct *tss = &per_cpu(init_tss, cpu);
++	struct tss_struct *tss = init_tss + cpu;
+ 	bool preload_fpu;
+ 
+ 	/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */
+@@ -367,6 +372,9 @@
+ 	 */
+ 	arch_end_context_switch(next_p);
+ 
++	percpu_write(current_task, next_p);
++	percpu_write(current_tinfo, &next_p->tinfo);
++
+ 	if (preload_fpu)
+ 		__math_state_restore();
+ 

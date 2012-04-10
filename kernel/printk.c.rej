@@ -1,0 +1,21 @@
+--- kernel/printk.c	2011-11-11 13:12:24.000000000 -0500
++++ kernel/printk.c	2011-11-15 20:03:00.000000000 -0500
+@@ -313,12 +313,17 @@
+ 	if (from_file && type != SYSLOG_ACTION_OPEN)
+ 		return 0;
+ 
++#ifdef CONFIG_GRKERNSEC_DMESG
++	if (grsec_enable_dmesg && !capable(CAP_SYSLOG) && !capable_nolog(CAP_SYS_ADMIN))
++		return -EPERM;
++#endif
++
+ 	if (syslog_action_restricted(type)) {
+ 		if (capable(CAP_SYSLOG))
+ 			return 0;
+ 		/* For historical reasons, accept CAP_SYS_ADMIN too, with a warning */
+ 		if (capable(CAP_SYS_ADMIN)) {
+-			WARN_ONCE(1, "Attempt to access syslog with CAP_SYS_ADMIN "
++			printk_once(KERN_WARNING "Attempt to access syslog with CAP_SYS_ADMIN "
+ 				 "but no CAP_SYSLOG (deprecated).\n");
+ 			return 0;
+ 		}
